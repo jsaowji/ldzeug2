@@ -1,0 +1,1 @@
+sudo g++ $(cat compile_flags.txt) pcmaudio.cpp -shared -fPIC  -o /usr/lib/vapoursynth/libpcmaudio.so

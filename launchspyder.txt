@@ -1,0 +1,1 @@
+VAPOURSYNTH_CONF_PATH=$(pwd)/noautoload.conf spyder
