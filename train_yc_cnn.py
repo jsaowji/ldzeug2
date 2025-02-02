@@ -6,7 +6,6 @@ core.std.LoadPlugin("/usr/lib/vapoursynth/libvsrawsource.so")
 core.std.LoadPlugin("/usr/lib/vapoursynth/libakarin.so")
 core.std.LoadPlugin("/usr/lib/vapoursynth/bestsource.so")
 core.std.LoadPlugin("/usr/lib/vapoursynth/libresize2.so")
-core.std.LoadPlugin("/usr/lib/vapoursynth/libfpng.so")
 core.std.LoadPlugin("/usr/lib/vapoursynth/libcolorbars.so")
 core.std.LoadPlugin("/usr/lib/vapoursynth/libvslsmashsource.so")
 #%%
@@ -44,12 +43,14 @@ cache_all_frames(train_output)
 #%%
 from ldzeug2.compact import compact
 import torch
+import os
 torch.set_default_device('cuda')
 
-mdlpth = "/tmp/rr4.pth"
+mdlpth = "/tmp/yc_cnn_smol.pth"
 
-model = compact(num_in_ch=1, num_out_ch=1, num_feat=8, num_conv=10, upscale=1, kernel_size=3, act_type='prelu', bias=False)
-model.load_state_dict(torch.load(mdlpth))
+model = compact(num_in_ch=1, num_out_ch=1, num_feat=32, num_conv=14, upscale=1, kernel_size=3, act_type='prelu', bias=False)
+if os.path.exists(mdlpth):
+    model.load_state_dict(torch.load(mdlpth))
 
 
 
@@ -64,7 +65,7 @@ loss_fn = torch.nn.L1Loss()
 
 #%%
 gt_size = 64
-batch_cnt = 1
+batch_cnt = 12
 
 
 tnsrss_in  = torch.ones((batch_cnt,1,gt_size,gt_size))

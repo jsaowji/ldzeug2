@@ -27,12 +27,12 @@ class CombConsts:
 		self.kB = 0.49211104112248356308804691718185
 		self.kR = 0.87728321993817866838972487283129
 
+		self.black16bIre_ntscj = 15360.0 / (256 * 256)
+		self.black16bIre_ntsc = 0x4680 / (256 * 256)
+
 		# ntsc-j i believe
 		#0x3c66 once or 0x3c00
-		if ntscj:
-			self.black16bIre = 15360.0 / (256 * 256)
-		else: 
-			self.black16bIre = 0x4680 / (256 * 256)
+		self.black16bIre = self.black16bIre_ntscj if ntscj else self.black16bIre_ntsc
 
 
 		self.white16bIre = 51200.0 / (256 * 256)

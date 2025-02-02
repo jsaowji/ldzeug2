@@ -1,3 +1,6 @@
 .vsjet/
 __pycache__/
 clips.py
+test*.py
+
+train_color_cnn_finetune.py

@@ -8,10 +8,14 @@ def interleave_clips(a: list[vs.VideoNode]):
         smallest_len = min(smallest_len,len(b))
     return core.std.Interleave([c[:smallest_len] for c in a] )
 
-def cut_to_rndm_frames(og: vs.VideoNode,frmcn) -> vs.VideoNode:
+def get_rndm_frames(og):
     frms = list(range(len(og)))
     random.shuffle(frms)
+    return frms
 
+def cut_to_rndm_frames(og: vs.VideoNode,frmcn) -> vs.VideoNode:
+    frms = get_rndm_frames(og)
+    
     from vstools import remap_frames
     return remap_frames(og,frms[:frmcn])
 
@@ -54,7 +58,8 @@ def frameto_numpy(xx:vs.VideoNode,a:int):
 
 def load_random_train_frame_from_vnode(train_output: vs.VideoNode, train_input: vs.VideoNode):
     a = random.randint(0,len(train_output)-1)
-    
+    return load_random_train_frame_from_vnode_idx_given(a,train_output,train_input)
+def load_random_train_frame_from_vnode_idx_given(a:int, train_output: vs.VideoNode, train_input: vs.VideoNode):
     hq = frameto_numpy(train_output,a)
     lq = frameto_numpy(train_input,a)
     
@@ -62,11 +67,23 @@ def load_random_train_frame_from_vnode(train_output: vs.VideoNode, train_input: 
     f_width = train_output.width
     return a,f_width,f_height,hq,lq
 
-def fill_train_buffer(tnsrss_in,tnsrss_out,lq,hq,f_width,f_height,gt_size,batch_cnt):
-    for a in range(batch_cnt):
+def fill_train_buffer(tnsrss_in,tnsrss_out,lq,hq,f_width,f_height,gt_size,batch_cnt,skip=0):
+    for a in range(skip,batch_cnt):
         xof,yof = get_rndm_crop(f_width, f_height, gt_size)
         inputs_cr  = lq          [:,:,  yof:(yof+gt_size), xof:(xof+gt_size)]
         outputs_cr = hq          [:,:,  yof:(yof+gt_size), xof:(xof+gt_size)]
+        tnsrss_in [a, : , : , :] = inputs_cr
+        tnsrss_out[a, : , : , :] = outputs_cr
+
+def fill_train_buffer_ex(tnsrss_in,tnsrss_out,lq,hq,f_width_lq,f_height_lq,lq_size,upscale,batch_cnt):
+    gt_size = lq_size * upscale
+    for a in range(batch_cnt):
+        xof,yof = get_rndm_crop(f_width_lq, f_height_lq, lq_size)
+
+        xofu,yofu = xof * upscale,yof * upscale
+
+        inputs_cr  = lq          [:,:,  yof:(yof+lq_size), xof:(xof+lq_size)]
+        outputs_cr = hq          [:,:,  yofu:(yofu+gt_size), xofu:(xofu+gt_size)]
         tnsrss_in [a, : , : , :] = inputs_cr
         tnsrss_out[a, : , : , :] = outputs_cr
 

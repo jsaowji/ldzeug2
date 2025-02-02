@@ -3,22 +3,18 @@ import sys
 import functools
 import math
 from ldzeug2.comb_consts import CombConsts,COLOR_CARIER_FREQ_FLT
+from ldzeug2.utils import ntsc_frames_to_fields
 from .stackable import *
 from dataclasses import dataclass
 
 __all__ = [
     'FieldModulatedOutput',
     'modulate_fields',
-
-    'annon_phase_frames_to_fields',
 ]
-
 #?? how was this designed
 iq_lowpass = [0.0021, 0.0191, 0.0903, 0.2308, 0.3153, 0.2308, 0.0903, 0.0191, 0.0021]
 
 import numpy as np
-
-
 
 @dataclass
 class FieldModulatedOutput:
@@ -30,18 +26,9 @@ class FieldModulatedOutput:
     i_hp: vs.VideoNode
     q_hp: vs.VideoNode
 
-def annon_phase_frames_to_fields(tbcc2_o_g):
-    def modifyrm(n,f):
-        f2 = f.copy()
-        f2.props["pid"] = [f2.props["PhaseID_B"],f2.props["PhaseID_A"]][f2.props["_Field"]]
-        return f2
-    fields = tbcc2_o_g.std.SeparateFields(tff=True)
-    bb = core.std.ModifyFrame(fields,fields,modifyrm)
-    return bb
 
 def do_splitin(tbcc2_o_g):
-    #tbcc2_o_g = tbcc2_o_g.std.Crop(left=2)
-    bb = annon_phase_frames_to_fields(tbcc2_o_g)
+    bb = ntsc_frames_to_fields(tbcc2_o_g)
     def modifyrm2(n,f,ofst):
         import numpy as np
         f2 = f[1].copy()
@@ -55,7 +42,7 @@ def do_splitin(tbcc2_o_g):
 
         mping = [2,3,0,1]
 
-        if f[0].props["pid"] in [2,3]:
+        if f[0].props["fieldPhase"] in [2,3]:
             ofst = [2, 3, 0,1][ofst]
         out[:,  :, :]    = inp[:,:,(ofst)::4]
         out[:, 1::2, :]  = inp[:,1::2,mping[ofst]::4]
@@ -109,20 +96,25 @@ def ycbcr_to_yuv(yo:Stackable,cb:Stackable,cr:Stackable,consts:CombConsts):
     return y,u,v
 
 
-def modulate_fields(a: vs.VideoNode, phaseid_at_f0: int = 1, consts=CombConsts(True), x_offset:int = 0) -> FieldModulatedOutput:
+def modulate_fields(a: vs.VideoNode, phaseid_at_f0: int = 1, consts=CombConsts(True), x_offset:int = 0,y_offset:int = 0,phase_offset:float=0) -> FieldModulatedOutput:
     assert phaseid_at_f0 in [1,2,3,4]
     sm = StackableManager()
-
+    a_x = sm.add_clip(a.resize.Bicubic(format=vs.GRAYS))
     yo,cb,cr = int_to_floatsm(sm,a)
     y,u,v = ycbcr_to_yuv(yo,cb,cr,consts)
     i_hp, q_hp = iq_from_uv(u,v)
     fsc =   (315/88) * 1_000_000
 
     #color carriere
-    cc = ( ((oX + x_offset) / (4.0*fsc)) * 2 * np.pi * fsc  + ( (-90) * (np.pi / 180)) )
+    cc = ( ((oX + x_offset) / (4.0*fsc)) * 2 * np.pi * fsc  + ( (-90     + phase_offset) * (np.pi / 180)) )
 
     phase_now = (((oN+phaseid_at_f0-1) % 4)+1)
-    swtch = ( (oY % 2) == 0).iftrue(1.0,-1.0) * phase_now.switch([
+
+
+    fld_shit = a_x["_Field"]
+    #fld_shit = 0
+
+    swtch = ( ((oY+y_offset+ fld_shit) % 2) == 0).iftrue(1.0,-1.0) * phase_now.switch([
         (1,1),
         (2,-1),
         (3,-1),
@@ -144,7 +136,7 @@ def modulate_fields(a: vs.VideoNode, phaseid_at_f0: int = 1, consts=CombConsts(T
         f2.props["fieldPhase"] =  (((n+phaseid_at_f0-1) % 4)+1)
 
         return f2
-        
+
     return FieldModulatedOutput(core.std.ModifyFrame(mm,mm,tag_fieldPhase),
                                 sm.eval_v(y),
                                 sm.eval_v(chrm),

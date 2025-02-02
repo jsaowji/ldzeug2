@@ -1,7 +1,7 @@
 import numpy as np
 from vstools import core,vs,cache_clip
 from .lddecode import LDDProject
-
+import sys
 __all__ = [
     "streaming_in",
     "streaming_out",
@@ -13,13 +13,13 @@ __all__ = [
 # | ffmpeg -video_size 760x486 -pixel_format yuv422p -r 30000/1001 -f rawvideo -i - -strict -1 -f yuv4mpegpipe - | mpv --pause=no -                              
 # | ffmpeg -video_size 910x526 -pixel_format yuv444p -r 30000/1001 -f rawvideo -i - -strict -1 -f yuv4mpegpipe - | mpv --pause=no -                              
 
-def ldproject_pipe(ld_decode_project: str) -> tuple[vs.VideoNode,LDDProject]:
+def ldproject_pipe(ld_decode_project: str,file_handle = sys.stdin.buffer) -> tuple[vs.VideoNode,LDDProject]:
     import sys
     project = LDDProject(ld_decode_project)
 
     #orig_tbc,project = ldproject_frames(ld_decode_project,addjson,extension)
 
-    tbc = streaming_in(sys.stdin.buffer)
+    tbc = streaming_in(file_handle).std.AssumeFPS(fpsnum=60_000,fpsden=1001)[:len(project.fields_g16)]
     tbc = tbc.resize.Bicubic(format=vs.GRAYS,range_in=1,range=1)
     tbc = core.std.DoubleWeave(tbc,tff=True)[::2]
     tbc = core.std.CopyFrameProps(tbc,project.frames,props=["PhaseID_A","PhaseID_B","fieldPhaseID"])

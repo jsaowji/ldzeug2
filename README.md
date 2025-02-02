@@ -26,8 +26,7 @@ set_output(combyc_frame_model(pri.frames,backend=BackendV2.TRT(),**kwa),"cnn per
 
 # good aswell
 set_output(comb_color_cnn(pri.frames,v2=False,crop=True),"color cnn v1")
-set_output(comb_color_cnn(pri.frames,v2=True,crop=True), "color cnn v2z")
-
+set_output(comb_color_cnn(pri.frames,v2=True,crop=True), "color cnn v2")
 ```
 
 ## vapoursynth audio source for ld-decoded pcm files
