@@ -224,11 +224,11 @@ def comb_split_already(vid_v: vs.VideoNode,
         xasd = join(      arra,family=vs.ColorFamily.RGB)
     else:
         y,u,v = to_yuv(y1, u1, v1,consts)
-        xasd = join(a.std.Expr(f"x 256 * 256 *", format=vs.GRAY16) for a in [
+        xasd = join([a.std.Expr(f"x 256 * 256 *", format=vs.GRAY16) for a in [
             sm.eval_v(y),
             sm.eval_v(u),
             sm.eval_v(v),
-        ]).std.SetFrameProps(_ColorRange=1)
+        ]]).std.SetFrameProps(_ColorRange=1)
 
     crop_params = {
         "left": 134,
