@@ -7,6 +7,7 @@ core.std.LoadPlugin("/usr/lib/vapoursynth/libvsrawsource.so")
 core.std.LoadPlugin("/usr/lib/vapoursynth/libakarin.so")
 core.std.LoadPlugin("/usr/lib/vapoursynth/bestsource.so")
 core.std.LoadPlugin("/usr/lib/vapoursynth/libresize2.so")
+core.std.LoadPlugin("/usr/lib/vapoursynth/libaddgrain.so")
 core.std.LoadPlugin("/usr/lib/vapoursynth/libcolorbars.so")
 core.std.LoadPlugin("/usr/lib/vapoursynth/libvslsmashsource.so")
 #%%
@@ -23,6 +24,39 @@ import numpy as np
 import matplotlib.pyplot as plt
 import vskernels as vke
 
+from ldzeug2.stackable import *
+def add_dropouts(frmz):
+    sm = StackableManager()
+    s = sm.add_clip(frmz)
+    grnd = sm.add_clip(gg:=frmz.grain.Add(var=100000,hcorr=0.9))
+    x = 10
+    isy = s * 0.0
+    for _ in range(80):
+        x = random.randint(2,6)
+        posi = random.randint(0,frmz.width-1)
+        posi2 = random.randint(0,frmz.height-1)
+        isy += ((oX >= posi) & (oX <= (posi+x))) & (oY == posi2)
+
+    frmz = sm.eval_v(isy.iftrue(grnd,s))
+    return frmz
+
+def lowypassy(a:vs.VideoNode,ffr=5.5e6):
+    import numpy as np
+    def ffn(n,f,ffr=ffr):
+        npf = np.array(f[0])
+        import scipy.signal as sp
+        b,a = sp.butter(3,ffr,fs=3.5e6*4)
+
+        npf = sp.filtfilt(b,a,npf)
+
+        
+        f2 = f.copy()
+        np.copyto(np.asarray(f2[0]),npf)
+        return f2
+
+    return a.std.ModifyFrame(a,ffn)
+
+
 exec(open("clips.py","rt").read())
 clips: list[vs.VideoNode] = out
 og = interleave_clips(clips)
@@ -32,7 +66,7 @@ on_fields = True
 kernel_in  = vke.Bicubic()
 #kernel_out = vke.Gaussian(sigma=0.5)
 kernel_out = kernel_in
-ccnt = 60
+ccnt = 180
 if on_fields:
     og_in  = kernel_in.scale(og,760,486,format=vs.YUV444P16).std.SeparateFields(tff=True)
     og_out = kernel_out.scale(og,760,486,format=vs.YUV444P16).std.SeparateFields(tff=True)
@@ -52,8 +86,8 @@ remaped_out = core.std.Interleave([og_out,og_out])
 modulated_in  = modulate_fields(remaped_in)
 modulated_out = modulate_fields(remaped_out)
 
-train_input  = join([modulated_in.tbc_out, modulated_in.i_carier,modulated_in.q_carier])
-train_output = join([modulated_out.luma_out,modulated_out.i_hp,modulated_out.q_hp])
+train_input  = join([lowypassy(add_dropouts(modulated_in.tbc_out)), modulated_in.i_carier,modulated_in.q_carier])
+train_output = join([modulated_out.luma_out,modulated_out.i_lp,modulated_out.q_lp])
 
 if on_fields:
     pass
@@ -72,11 +106,18 @@ pg.image(np.array([
     np.array(train_input.get_frame(0)[0]).transpose(),
 ]))
 #%%
+import pyqtgraph as pg
+%gui qt5
+pg.image(np.array([
+    np.array(train_output.get_frame(0)[1]).transpose(),
+    np.array(train_input.get_frame(0)[1]).transpose(),
+]))
+#%%
 import torch
 import os
 
 torch.set_default_device('cuda')
-mdlpth = "/tmp/rr46.pth"
+mdlpth = "/tmp/rr48.pth"
 
 from ldzeug2.colorcnn_trch import FullModel2
 model = FullModel2(num_feat=64,num_conv=16)

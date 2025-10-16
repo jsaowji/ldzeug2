@@ -25,6 +25,8 @@ class FieldModulatedOutput:
     q_carier: vs.VideoNode
     i_hp: vs.VideoNode
     q_hp: vs.VideoNode
+    i_lp: vs.VideoNode
+    q_lp: vs.VideoNode
 
 
 def do_splitin(tbcc2_o_g):
@@ -113,6 +115,8 @@ def modulate_fields(a: vs.VideoNode, phaseid_at_f0: int = 1, consts=CombConsts(T
 
     fld_shit = a_x["_Field"]
     #fld_shit = 0
+    #TODO: i have no idea about this
+
 
     swtch = ( ((oY+y_offset+ fld_shit) % 2) == 0).iftrue(1.0,-1.0) * phase_now.switch([
         (1,1),
@@ -143,4 +147,6 @@ def modulate_fields(a: vs.VideoNode, phaseid_at_f0: int = 1, consts=CombConsts(T
                                 sm.eval_v(mod1),
                                 sm.eval_v(mod2),
                                 sm.eval_v(i_hp),
-                                sm.eval_v(q_hp))
+                                sm.eval_v(q_hp),
+                                sm.eval_v(i),
+                                sm.eval_v(q),)

@@ -4,7 +4,7 @@ import numpy as np
 
 # based on the one from neosr
 class compact(nn.Module):
-    def __init__(self, num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=16, upscale=1, kernel_size=3, act_type='prelu',bias=True,**kwargs):
+    def __init__(self, num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=16, upscale=1, kernel_size=3, act_type='prelu',bias=True, addback=False,**kwargs):
         super(compact, self).__init__()
         self.num_in_ch = num_in_ch
         self.num_out_ch = num_out_ch
@@ -12,6 +12,8 @@ class compact(nn.Module):
         self.num_conv = num_conv
         self.upscale = upscale
         self.act_type = act_type
+
+        self.addback = addback
 
         strid = 1
         padd = "same"
@@ -49,6 +51,8 @@ class compact(nn.Module):
         for i in range(0, len(self.body)):
             out = self.body[i](out)
 
+        if self.addback:
+            out += x
         return out
 
 from .stackable import Stackable,StackableManager

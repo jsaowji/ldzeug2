@@ -9,10 +9,12 @@ def interleave_clips(a: list[vs.VideoNode]):
     return core.std.Interleave([c[:smallest_len] for c in a] )
 
 def get_rndm_frames(og):
-    frms = list(range(len(og)))
+    return get_rndm_frames_cnt(len(og))
+
+def get_rndm_frames_cnt(cntt):
+    frms = list(range(cntt))
     random.shuffle(frms)
     return frms
-
 def cut_to_rndm_frames(og: vs.VideoNode,frmcn) -> vs.VideoNode:
     frms = get_rndm_frames(og)
     

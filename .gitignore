@@ -4,3 +4,9 @@ clips.py
 test*.py
 
 train_color_cnn_finetune.py
+
+*.onnx
+*.pth
+*.engine
+*.cache
+*.lock

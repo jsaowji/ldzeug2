@@ -9,6 +9,7 @@ __all__ = [
     'oY',
     'oN',
     'fltr_to_expr',
+    'fltr_to_expr_causal'
 ]
 
 class Stackable:
@@ -205,7 +206,7 @@ class Stackable:
 
         for b in a[1:]:
             opl += [ b[0], b[1] ]
-        for c in a[1:]:
+        for _ in a[1:]:
             opl += [ Stackable.operation("val! cmp!") ]
             opl += [ Stackable.operation("cmp@ cmp_s@ < val@ val_s@ ? val_s!") ]
             opl += [ Stackable.operation("cmp@ cmp_s@ < cmp@ cmp_s@ ? cmp_s!") ]
@@ -313,4 +314,13 @@ def fltr_to_expr(x: Stackable,v: list[float]) -> Stackable:
     for i,n in enumerate(range(-n,n+1)):
         sta += x[n,0] * v[i]
     
+    return sta
+
+
+def fltr_to_expr_causal(x: Stackable,v: list[float]) -> Stackable:
+    assert isinstance(x,Stackable)
+
+    sta = Stackable.const(0)
+    for i in range(0,len(v)):
+        sta += x[-i,0] * v[len(v)-1-i]
     return sta

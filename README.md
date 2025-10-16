@@ -9,6 +9,7 @@ Pretrained models can be found in Releases and should be put wherever ldzeug2/ut
 from ldzeug2.lddecode import LDDProject
 from ldzeug2.colordecoder import *
 from vstools import *
+from vsmlrt import BackendV2
 
 pri = LDDProject("example.tbc")
 

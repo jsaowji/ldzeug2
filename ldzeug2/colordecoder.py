@@ -1,5 +1,5 @@
 from __future__ import annotations
-from vstools import core, vs,split,join
+from vstools import color, core, set_output, vs,split,join
 from dataclasses import dataclass
 from typing import Optional, Any
 from ldzeug2.comb_consts import CombConsts
@@ -22,14 +22,14 @@ from .utils import get_model_path, ntsc_fields_to_frames, ntsc_frames_to_fields
 
 
 
-def color_notch_bp(framesp: vs.VideoNode,f1: float = 4.5,f2: float = 55) -> vs.VideoNode:
+def color_notch_bp(framesp: vs.VideoNode,f1: float = 4.5,f2: float = 5.5) -> vs.VideoNode:
     import scipy.signal as sp
     sm = StackableManager()
     fltrr = sp.firwin(127,[f1,f2],fs=(315/88)*4,pass_zero="bandstop")
     f2 = fltr_to_expr(sm.add_clip(framesp), fltrr)
     return sm.eval_v(f2)
 
-def color_notch_lp(framesp: vs.VideoNode,freq: float = 4.2) -> vs.VideoNode:
+def color_notch_lp(framesp: vs.VideoNode,freq: float = 4.5) -> vs.VideoNode:
     import scipy.signal as sp
     sm = StackableManager()
     fltrr = sp.firwin(127,freq,fs=(315/88)*4,pass_zero="lowpass")
@@ -194,8 +194,10 @@ def comb_split_already(vid_v: vs.VideoNode,
     y1 = y1 * luma_gain
 
     if color_low:
+        if isinstance(color_low,bool):
+            color_low =4.2
         import scipy.signal as sp
-        fltrr = sp.firwin(127,4.2,fs=(315/88)*4,pass_zero="lowpass")
+        fltrr = sp.firwin(127,color_low,fs=(315/88)*4,window="boxcar",pass_zero="lowpass")
         chrma_x = fltr_to_expr(chrma_x, fltrr)
         i,q = split_iq(chrma_x * pkpk)
         i,q = sm.eval_x([i,q])
@@ -221,7 +223,7 @@ def comb_split_already(vid_v: vs.VideoNode,
         r,g,b = to_rgb(y1,u1,v1,consts)
         arra = [a.std.Expr(f"x", format=vs.GRAY16) for a in [sm.eval_v(r), sm.eval_v(g), sm.eval_v(b)]]
 
-        xasd = join(      arra,family=vs.ColorFamily.RGB)
+        xasd = join(arra,family=vs.ColorFamily.RGB)
     else:
         y,u,v = to_yuv(y1, u1, v1,consts)
         xasd = join([a.std.Expr(f"x 256 * 256 *", format=vs.GRAY16) for a in [
@@ -439,6 +441,18 @@ def combyc_frame_model(vid_v: vs.VideoNode, network_path = None,backend = None,*
         **kwargs
     )
 
+def comb_crop(vid_v: vs.VideoNode,crop=True):
+    if not crop:
+        return vid_v
+    else:
+        crop_params = {
+            "left": 134,
+            "right": 16,
+            "top": 40,
+            "bottom": 0
+        }
+        return vid_v.std.Crop(**crop_params)
+
 def comb1d(vid_v: vs.VideoNode,**kwargs):
     sm = StackableManager()
     vid_x = sm.add_clip(vid_v)
@@ -469,6 +483,12 @@ def comb2d_2(vid_v: vs.VideoNode,**kwargs):
     a =  (vid_x[0, 0] + vid_x[0, 1] ) / 2
     b =  (vid_x[0, 0] + vid_x[0, -1]) / 2
     lma = (oY  % 2 == 0).iftrue(a,b)
+    #lma =  (vid_x[0, 0] + vid_x[0, -2]) / 2
+    #a =  (vid_x[0, 0] + vid_x[0, -2] ) / 2
+    #b =  (vid_x[0, 0] + vid_x[0, -5]) / 2
+    #lma = (oY  % 2 == 0).iftrue(a,b)
+
+    
     #lma = sm.add_clip(vid_v.std.BoxBlur())
 
     chrma = sm.eval_x(vid_x - lma)
@@ -522,17 +542,30 @@ def input_for_color_cnn(frames,x_offset=0):
     a = fields_for_tbcc2
     return mod1,mod2,a
 
+
+
+def comb_color_cnn_color_notch(*args,**kwargs):
+    ya = comb_color_cnn(*args,**kwargs)
+    yb = comb_color_cnn(color_notch_lp(*args),**kwargs)
+    return join([
+        split(ya)[0],
+        split(yb)[1],
+        split(yb)[2],
+    ])
+
+
+
 def comb_color_cnn(frames,
         v2=False,
         perfield=True,
         network_path=None,
         consts=CombConsts(True),
         crop=False,
-        project:LDDProject=None,
+        project: Optional[LDDProject]=None,
         bp_q=False,
         backend=None,
         chroma_phase=0.0,
-        iq_cariers: optional[tuple[vs.VideoNode,vs.VideoNode]] = None):
+        iq_cariers: Optional[tuple[vs.VideoNode,vs.VideoNode]] = None):
     from vsmlrt import inference,BackendV2
     
     if backend is None:
@@ -590,17 +623,17 @@ def comb_color_cnn(frames,
 
     y,u,v = to_yuv(y, u1, v1,consts=consts)
 
-    outcl = join(a.std.Expr("x 256 * 256 *", format=vs.GRAY16) for a in [
+    outcl = join([a.std.Expr("x 256 * 256 *", format=vs.GRAY16) for a in [
         sm.eval_v(y),
         sm.eval_v(u),
         sm.eval_v(v),
-    ]).std.SetFrameProps(_ColorRange=1)
+    ]]).std.SetFrameProps(_ColorRange=1)
     if perfield:
         outcl = outcl.std.DoubleWeave(tff=True)[::2]
 
     xasd = outcl
     if crop:
-        xasd = xasd.std.Crop(**crop_params).std.Crop(left=2)
+        xasd = xasd.std.Crop(**crop_params).std.Crop(left=2).std.AddBorders(top=2)
     xasd = xasd.std.SetFrameProps(_SARDen=88,_SARNum=75)
     from vstools import Matrix,Transfer,Primaries
     xasd = Matrix.SMPTE170M.apply(Transfer.BT601.apply(Primaries.BT601_525.apply(xasd)))
