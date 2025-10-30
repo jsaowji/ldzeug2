@@ -1,3 +1,4 @@
+# ruff: noqa
 #%%%
 %load_ext autoreload
 %autoreload 2

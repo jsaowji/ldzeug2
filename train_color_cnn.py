@@ -25,37 +25,6 @@ import matplotlib.pyplot as plt
 import vskernels as vke
 
 from ldzeug2.stackable import *
-def add_dropouts(frmz):
-    sm = StackableManager()
-    s = sm.add_clip(frmz)
-    grnd = sm.add_clip(gg:=frmz.grain.Add(var=100000,hcorr=0.9))
-    x = 10
-    isy = s * 0.0
-    for _ in range(80):
-        x = random.randint(2,6)
-        posi = random.randint(0,frmz.width-1)
-        posi2 = random.randint(0,frmz.height-1)
-        isy += ((oX >= posi) & (oX <= (posi+x))) & (oY == posi2)
-
-    frmz = sm.eval_v(isy.iftrue(grnd,s))
-    return frmz
-
-def lowypassy(a:vs.VideoNode,ffr=5.5e6):
-    import numpy as np
-    def ffn(n,f,ffr=ffr):
-        npf = np.array(f[0])
-        import scipy.signal as sp
-        b,a = sp.butter(3,ffr,fs=3.5e6*4)
-
-        npf = sp.filtfilt(b,a,npf)
-
-        
-        f2 = f.copy()
-        np.copyto(np.asarray(f2[0]),npf)
-        return f2
-
-    return a.std.ModifyFrame(a,ffn)
-
 
 exec(open("clips.py","rt").read())
 clips: list[vs.VideoNode] = out

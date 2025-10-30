@@ -1,11 +1,7 @@
-from vsmlrt import BackendV2
 from vstools import vs, core, set_output
-import sys
-
 from ldzeug2.lddecode import LDDProject
-from ldzeug2.colordecoder import *
-
-from vstools import *
+from ldzeug2.colordecoder import comb1d, combyc_frame_model
+from vstools import depth,get_y
 import os
 
 

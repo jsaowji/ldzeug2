@@ -1,0 +1,27 @@
+[project]
+name = "ldzeug2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    
+]
+requires-python = ">=3.12"
+dependencies = [
+    "sympy",
+    "scipy",
+    "scipy-stubs",
+    "numpy",
+    "matplotlib",
+    "spyder-kernels>=3.1.1",
+    "vapoursynth>=72",
+    "vsjetpack>=0.8.5",
+    "torch>=2.9.0",
+]
+
+[tool.setuptools]
+packages = ["ldzeug2"]
+
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.*" = ["F401", "F403"]
