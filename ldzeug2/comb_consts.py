@@ -10,7 +10,6 @@ __all__ = [
 COLOR_CARIER_FREQ_FLT = (315 / 88) * 1_000_000
 COLOR_CARIER_FREQ_FRQ = Fraction(315, 88) * 1_000_000
 
-
 class CombConsts:
     def __init__(self, ntscj=True):
         self.Y_MIN = 1.0 / 256.0

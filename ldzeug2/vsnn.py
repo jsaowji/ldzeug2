@@ -20,11 +20,21 @@ import vskernels as vke
 
 from .stackable import *
 from enum import Enum
+from .compact import compact
+from .colorcnn_trch import ColorCNNV1,ColorCNNV2
 
 class ModelType(Enum):
-    COMPACT = 1
+    COMPACT    = 1
     COLORCNNv1 = 2
     COLORCNNv2 = 3
+
+    def get_torch_model(self, **kwargs):
+        if self == ModelType.COMPACT:
+            return compact(num_in_ch=1, num_out_ch=1, **kwargs)
+        elif self == ModelType.COLORCNNv1:
+            return ColorCNNV1(**kwargs)
+        elif self == ModelType.COLORCNNv2:
+            return ColorCNNV2(**kwargs)
 
 def open_all_clips(file="clips.txt") -> list[vs.VideoNode]:
     def vidf(a):
@@ -41,10 +51,9 @@ def build_train_dataset(model:ModelType=ModelType.COMPACT, count=180, on_fields=
     in_kernel  = vke.Bicubic()
 
     og = in_kernel.scale(og,760,486,format=vs.YUV444P16)
-    og = og.std.SeparateFields(tff=True)
     
     frms = get_rndm_frames(og)
-    og_in  = remap_frames(og,frms[:count])
+    og_in  = remap_frames(og,frms[:count]).std.SeparateFields(tff=True)
 
     modulated_in  = modulate_fields(og_in)
 
@@ -77,7 +86,7 @@ def build_train_dataset(model:ModelType=ModelType.COMPACT, count=180, on_fields=
 import torch
 import os
 
-from ldzeug2.colorcnn_trch import FullModel2
+from ldzeug2.colorcnn_trch import ColorCNNV2
 
 class Training:
     def __init__(self, model_fn, dataset, model_path="/tmp/test.pth"):
@@ -121,6 +130,7 @@ class Training:
             fill_train_buffer(self.tnsrss_in,self.tnsrss_out,lq,hq,f_width,f_height,self.gt_size,self.batch_cnt//2,self.batch_cnt//2)
 
             self.optimizer.zero_grad()
+
             model_outputs = self.model(self.tnsrss_in)
             loss = self.loss_fn(model_outputs, self.tnsrss_out)
 
@@ -136,6 +146,7 @@ class Training:
             print(self.i,losnow)
 
             if self.i % self.save_it == 0:
+            #if True:
                 mdll = model_outputs.detach().cpu().numpy()[0,0]
                 lql = self.tnsrss_in.detach().cpu().numpy()[0,0]
                 hql = self.tnsrss_out.detach().cpu().numpy()[0,0]

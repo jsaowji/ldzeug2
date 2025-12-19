@@ -3,7 +3,7 @@ import torch
 import sys
 from ldzeug2.compact import compact, compact_to_expr
 from ldzeug2.experimentalyc import FullModelExperimental
-from ldzeug2.colorcnn_trch import FullModel2,FullModel
+from ldzeug2.colorcnn_trch import ColorCNNV2,ColorCNNV1
 
 batch_size = 1
 

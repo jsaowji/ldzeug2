@@ -1,6 +1,6 @@
 from vstools import vs, core, set_output
 from ldzeug2.lddecode import LDDProject
-from ldzeug2.colordecoder import comb1d, combyc_frame_model
+from ldzeug2.colordecoder import comb1d, combyc_field_model, combyc_frame_model
 from vstools import depth,get_y
 import os
 
@@ -60,5 +60,5 @@ frames2 = core.std.ModifyFrame(pri.frames,[
                                            ],ChangeFieldIDS)
 
 set_output(vfmmatch)
-oo = combyc_frame_model(frames2,crop=True)
-set_output(oo)
+set_output(frame_model := combyc_frame_model(frames2,crop=True))
+set_output(field_model := combyc_field_model(pri.frames,crop=True))

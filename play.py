@@ -19,8 +19,8 @@ if os.path.exists(digiaudio):
 
 #nd = comb2d(project.frames, crop=True).resize.Bicubic(format=vs.YUV422P8,matrix_in_s="170m")
 
-nd = comb_color_cnn(project.frames,v2=False,crop=True,consts=CombConsts("NTSC" not in os.environ)).resize.Bicubic(format=vs.YUV422P8,matrix_in_s="170m")
-#nd = comb3d(project.frames, crop=True).std.AddBorders(top=2).resize.Bicubic(format=vs.YUV420P8,matrix_in_s="170m")
+#nd = comb_color_cnn(project.frames,v2=False,crop=True,consts=CombConsts("NTSC" not in os.environ)).resize.Bicubic(format=vs.YUV422P8,matrix_in_s="170m")
+nd = comb3d(project.frames, crop=True).std.AddBorders(top=2).resize.Bicubic(format=vs.YUV420P8,matrix_in_s="170m")
 
 nd = Sar.from_ar(height=nd.height,active_area=nd.width,dar=Dar(4,3)).apply(nd)
 

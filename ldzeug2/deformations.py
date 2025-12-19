@@ -26,11 +26,12 @@ def add_dropouts(frmz: vs.VideoNode) -> vs.VideoNode:
     frmz = sm.eval_v(isy.iftrue(grnd,s))
     return frmz
 
-def hor_butter_lowpass(a: vs.VideoNode, ffr=5.5e6):
+
+def hor_butter_lowpass(a: vs.VideoNode, N=2,ffr=5.0e6):
 
     def ffn(n,f,ffr=ffr):
         npf = np.array(f[0])
-        b,a = sp.butter(3,ffr,fs=3.5e6*4)
+        b,a = sp.butter(N,ffr,fs=3.5e6*4)
 
         npf = sp.filtfilt(b,a,npf)
 

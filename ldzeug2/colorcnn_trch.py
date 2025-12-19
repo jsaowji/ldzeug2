@@ -2,12 +2,16 @@ import torch
 from .compact import compact
 from torch import nn
 
+__all__ = [
+    "ColorCNNV1",
+    "ColorCNNV2",
+]
 
-class FullModel(torch.nn.Module):
+class ColorCNNV1(torch.nn.Module):
     def __init__(self):
-        super(FullModel, self).__init__()
+        super(ColorCNNV1, self).__init__()
         self.small_model = compact(1, 1, num_feat=32, num_conv=12, bias=False)
-        self.big_model = compact(3, 3, num_feat=16, num_conv=6, bias=False)
+        self.big_model   = compact(3, 3, num_feat=16, num_conv=6, bias=False)
 
     def forward(self, x):
         inbuf = x[:, 0, :, :].unsqueeze(1)
@@ -31,9 +35,9 @@ class FullModel(torch.nn.Module):
         return outbuf
 
 
-class FullModel2(torch.nn.Module):
+class ColorCNNV2(torch.nn.Module):
     def __init__(self, num_feat=64, num_conv=16):
-        super(FullModel2, self).__init__()
+        super(ColorCNNV2, self).__init__()
         num_in_ch = 1
         num_out_ch = 3
         kernel_size = 3

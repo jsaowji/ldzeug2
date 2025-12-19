@@ -51,6 +51,7 @@ ld-dropout-correct --output-json /tmp/a.json example.tbc - | python comb_pipe.py
 - vstools from JET Suite (py)
 - vsmlrt (py + vs)
 - fillborders (vs)
+- chikuzen/vsrawsource (vs)
 - sympy (py)
 - scipy (py)
 - numpy (py)

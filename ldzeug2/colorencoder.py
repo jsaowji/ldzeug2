@@ -126,13 +126,20 @@ def modulate_fields(
         (-90 + phase_offset) * (np.pi / 180)
     )
 
-    phase_now = ((oN + phaseid_at_f0 - 1) % 4) + 1
+    phase_now_lmbda = lambda mm: ((mm + (phaseid_at_f0 - 1)) % 4) + 1
+    
+    phase_now = phase_now_lmbda(oN)
 
     fld_shit = a_x["_Field"]
-    # fld_shit = 0
+    fld_shit = 0
+
+    
     # TODO: i have no idea about this currently
 
-    swtch = (((oY + y_offset + fld_shit) % 2) == 0).iftrue(
+    #swtch = (((oY + y_offset + fld_shit) % 2) == 0).iftrue(
+    #    1.0, -1.0
+    #) *
+    swtch = (((oY + y_offset) % 2) == 0).iftrue(
         1.0, -1.0
     ) * phase_now.switch(
         [
@@ -155,7 +162,7 @@ def modulate_fields(
 
     def tag_fieldPhase(n, f):
         f2 = f.copy()
-        f2.props["fieldPhase"] = ((n + phaseid_at_f0 - 1) % 4) + 1
+        f2.props["fieldPhase"] = phase_now_lmbda(n)
 
         return f2
 

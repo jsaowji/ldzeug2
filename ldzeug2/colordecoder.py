@@ -191,6 +191,7 @@ def comb_split_already(
     # wokraround some bug in the stackable system
     # where relative acces to Stackable doesnt work properly but to raw clip it does
     pkpk = sm.eval_x(pkpk1)
+    from vstools import set_output
 
     i, q = split_iq(chrma_x * pkpk)
     if iq_cariers is not None:
@@ -655,7 +656,7 @@ def comb_color_cnn(
     xasd = xasd.std.SetFrameProps(_SARDen=88, _SARNum=75)
     from vstools import Matrix, Transfer, Primaries
 
-    xasd = Matrix.SMPTE170M.apply(Transfer.BT601.apply(Primaries.BT601_525.apply(xasd)))
+    xasd = Matrix.ST170_M.apply(Transfer.BT601.apply(Primaries.ST170_M.apply(xasd)))
 
     return xasd
 
